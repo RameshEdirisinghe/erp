@@ -1,0 +1,643 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Quotation, QuotationItem, Sale } from '@/models/Sale';
+
+interface QuotationFormProps {
+  onSubmit: (quotationData: Omit<Quotation, 'id'>) => Promise<Quotation>;
+  editingSale?: Sale | null;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+interface ItemFormData {
+  itemDescription: string;
+  year: string;
+  unitPrice: string;
+  quantity: string;
+  warranty: string;
+  taxRate: string;
+}
+
+export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCancel }: QuotationFormProps) {
+  const [formData, setFormData] = useState({
+    quotationNo: ``,
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    customerAddress: '',
+    vatNo: '',
+  });
+
+  const [items, setItems] = useState<QuotationItem[]>([]);
+  const [itemForms, setItemForms] = useState<ItemFormData[]>([
+    {
+      itemDescription: '',
+      year: '',
+      unitPrice: '',
+      quantity: '',
+      warranty: '',
+      taxRate: 'V18',
+    }
+  ]);
+  const [notes, setNotes] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editingSale) {
+      setFormData({
+        quotationNo: editingSale.quotationNo || `QTN-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+        customerName: editingSale.customer || '',
+        customerEmail: editingSale.email || '',
+        customerPhone: editingSale.phone || '',
+        customerAddress: editingSale.location || '',
+        vatNo: editingSale.vatNo || '',
+      });
+      setItems(editingSale.items || []);
+      setNotes('');
+      
+      // Convert existing items to forms
+      if (editingSale.items && editingSale.items.length > 0) {
+        setItemForms(editingSale.items.map(item => ({
+          itemDescription: item.description,
+          year: item.year || '',
+          unitPrice: item.rate.toString(),
+          quantity: item.qty.toString(),
+          warranty: item.warranty || '',
+          taxRate: item.tax,
+        })));
+      }
+    }
+  }, [editingSale]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleItemFormChange = (index: number, field: keyof ItemFormData, value: string) => {
+    setItemForms(prev => {
+      const newForms = [...prev];
+      newForms[index] = {
+        ...newForms[index],
+        [field]: value
+      };
+      return newForms;
+    });
+  };
+
+  const addItemForm = () => {
+    setItemForms(prev => [
+      ...prev,
+      {
+        itemDescription: '',
+        year: '',
+        unitPrice: '',
+        quantity: '',
+        warranty: '',
+        taxRate: 'V18',
+      }
+    ]);
+  };
+
+  const removeItemForm = (index: number) => {
+    if (itemForms.length > 1) {
+      setItemForms(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const addAllItems = () => {
+    const newItems: QuotationItem[] = [];
+    const errors: string[] = [];
+
+    itemForms.forEach((form, index) => {
+      if (!form.itemDescription || !form.unitPrice || !form.quantity) {
+        errors.push(`Item ${index + 1}: Please fill Item Description, Unit Price, and Quantity.`);
+        return;
+      }
+
+      const unitPrice = parseFloat(form.unitPrice) || 0;
+      const quantity = parseFloat(form.quantity) || 0;
+      
+      if (unitPrice <= 0) {
+        errors.push(`Item ${index + 1}: Unit Price must be greater than 0.`);
+        return;
+      }
+      
+      if (quantity <= 0) {
+        errors.push(`Item ${index + 1}: Quantity must be greater than 0.`);
+        return;
+      }
+
+      const totalPrice = unitPrice * quantity;
+
+      const newItem: QuotationItem = {
+        id: Date.now().toString() + index,
+        itemCode: `ITEM-${items.length + index + 1}`,
+        description: form.itemDescription,
+        qty: quantity,
+        rate: unitPrice,
+        tax: form.taxRate,
+        warranty: form.warranty,
+        amount: totalPrice,
+      };
+
+      newItems.push(newItem);
+    });
+
+    if (errors.length > 0) {
+      setError(errors.join('\n'));
+      return;
+    }
+
+    if (newItems.length === 0) {
+      setError('Please add at least one valid item.');
+      return;
+    }
+
+    setItems(prev => [...prev, ...newItems]);
+    
+    // Reset all item forms
+    setItemForms([
+      {
+        itemDescription: '',
+        year: '',
+        unitPrice: '',
+        quantity: '',
+        warranty: '',
+        taxRate: 'V18',
+      }
+    ]);
+    
+    setError(null);
+  };
+
+  const removeItem = (id: string) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.quotationNo || !formData.customerName || items.length === 0) {
+      setError('Please fill Quotation Number, Customer Name, and add at least one item.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const today = new Date();
+      const dateStr = today.toLocaleDateString('en-GB').replace(/\//g, '.');
+      const validUntilDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const validUntilStr = validUntilDate.toLocaleDateString('en-GB').replace(/\//g, '.');
+
+      const quotationData: Omit<Quotation, 'id'> = {
+        quotationNo: formData.quotationNo,
+        customerName: formData.customerName,
+        customerEmail: formData.customerEmail,
+        customerPhone: formData.customerPhone,
+        customerAddress: formData.customerAddress,
+        vatNo: formData.vatNo,
+        status: 'Draft',
+        date: dateStr,
+        validUntil: validUntilStr,
+        totalAmount: calculateTotal(),
+        items: items,
+        notes: notes,
+      };
+
+      await onSubmit(quotationData);
+      
+      setSuccessMessage('Quotation created successfully!');
+      
+      // Reset form
+      setFormData({
+        quotationNo: `QTN-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        customerAddress: '',
+        vatNo: '',
+      });
+      setItems([]);
+      setItemForms([
+        {
+          itemDescription: '',
+          year: '',
+          unitPrice: '',
+          quantity: '',
+          warranty: '',
+          taxRate: 'V18',
+        }
+      ]);
+      setNotes('');
+      
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+        setSuccessMessage(null);
+      }, 1500);
+      
+    } catch (error) {
+      setError('Failed to create quotation. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const calculateTotal = () => {
+    return items.reduce((total, item) => total + item.amount, 0);
+  };
+
+  const totalAmount = calculateTotal();
+
+  return (
+    <div className="max-w-8xl mx-auto space-y-6">
+      {successMessage && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="text-green-600 font-medium">{successMessage}</div>
+        </div>
+      )}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-white">
+              {editingSale ? 'Create Quotation from Sale' : 'Create New Quotation'}
+            </h1>
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="text-white hover:text-gray-200"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="text-red-600 font-medium whitespace-pre-line">{error}</div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                    Item Details ({itemForms.length} items)
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={addItemForm}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm"
+                  >
+                    Add Another Item
+                  </button>
+                </div>
+                <div className="space-y-6">
+                  {itemForms.map((itemForm, index) => (
+                    <div key={index} className="border border-gray-300 rounded-lg p-4 bg-white">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-semibold text-gray-700">Item {index + 1}</h4>
+                        {itemForms.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeItemForm(index)}
+                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Item Description *
+                          </label>
+                          <textarea
+                            value={itemForm.itemDescription}
+                            onChange={(e) => handleItemFormChange(index, 'itemDescription', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition h-20"
+                            placeholder="Product or service description"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Unit Price *
+                            </label>
+                            <input
+                              type="number"
+                              value={itemForm.unitPrice}
+                              onChange={(e) => handleItemFormChange(index, 'unitPrice', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Quantity *
+                            </label>
+                            <input
+                              type="number"
+                              value={itemForm.quantity}
+                              onChange={(e) => handleItemFormChange(index, 'quantity', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="1"
+                              min="1"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Tax Rate
+                            </label>
+                            <select
+                              value={itemForm.taxRate}
+                              onChange={(e) => handleItemFormChange(index, 'taxRate', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                            >
+                              <option value="V0">VAT 0%</option>
+                              <option value="V8">VAT 8%</option>
+                              <option value="V18">VAT 18%</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Warranty
+                          </label>
+                          <input
+                            type="text"
+                            value={itemForm.warranty}
+                            onChange={(e) => handleItemFormChange(index, 'warranty', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                            placeholder="1 Year"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Year of Build
+                          </label>
+                          <input
+                            type="text"
+                            value={itemForm.year}
+                            onChange={(e) => handleItemFormChange(index, 'warranty', e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                            placeholder="202X"
+                          />
+                        </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addAllItems}
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                >
+                  Add All Items to Quotation
+                </button>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
+                  Quotation Details
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Quotation Number *</label>
+                    <input
+                      type="text"
+                      name="quotationNo"
+                      value={formData.quotationNo}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                      placeholder="QTN-2024-001"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">VAT Number</label>
+                    <input
+                      type="text"
+                      name="vatNo"
+                      value={formData.vatNo}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                      placeholder="VAT123456"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
+                  Customer Information
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Customer Name *</label>
+                    <input
+                      type="text"
+                      name="customerName"
+                      value={formData.customerName}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                      placeholder="Customer Name"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        name="customerEmail"
+                        value={formData.customerEmail}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                        placeholder="customer@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact No</label>
+                      <input
+                        type="tel"
+                        name="customerPhone"
+                        value={formData.customerPhone}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                        placeholder="+94 XX XXX XXXX"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                    <input
+                      type="text"
+                      name="customerAddress"
+                      value={formData.customerAddress}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                      placeholder="Customer Address"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Number</label>
+                      <input
+                        type="text"
+                        name="VehicleNumber"
+                        value={formData.customerEmail}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                        placeholder="vehicle number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Chassy number</label>
+                      <input
+                        type="text"
+                        name="ChassyNumber"
+                        value={formData.customerPhone}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                        placeholder="Chassy number"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-lg border border-gray-300 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Quotation Preview</h3>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-center text-gray-800 mb-4">QUOTATION</h2>
+                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                    <div>
+                      <span className="font-semibold">Quotation Number:</span>
+                      <p className="text-gray-700">{formData.quotationNo}</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold">VAT Number:</span>
+                      <p className="text-gray-700">{formData.vatNo || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
+                    {formData.customerName || 'Customer Name'}
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-semibold">Email:</span>
+                      <span className="text-gray-700 ml-2">{formData.customerEmail || 'No email'}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Contact No:</span>
+                      <span className="text-gray-700 ml-2">{formData.customerPhone || 'No phone'}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold">Address:</span>
+                      <span className="text-gray-700 ml-2">{formData.customerAddress || 'No address'}</span>
+                    </div>
+                  </div>
+                </div>
+                {items.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-800 mb-3">Quotation Items:</h4>
+                    <table className="w-full border-collapse border border-gray-300 text-sm">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border border-gray-300 px-3 py-2 text-left">Item Code</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Description</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Unit Price</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Qty</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Tax</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Total</th>
+                          <th className="border border-gray-300 px-3 py-2 text-left">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item) => (
+                          <tr key={item.id}>
+                            <td className="border border-gray-300 px-3 py-2">{item.itemCode}</td>
+                            <td className="border border-gray-300 px-3 py-2">
+                              <div>
+                                <div>{item.description}</div>
+                                {item.warranty && (
+                                  <div className="text-xs text-gray-600">Warranty: {item.warranty}</div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2">Rs {item.rate.toLocaleString()}</td>
+                            <td className="border border-gray-300 px-3 py-2">{item.qty}</td>
+                            <td className="border border-gray-300 px-3 py-2">{item.tax}</td>
+                            <td className="border border-gray-300 px-3 py-2">Rs {item.amount.toLocaleString()}</td>
+                            <td className="border border-gray-300 px-3 py-2">
+                              <button
+                                type="button"
+                                onClick={() => removeItem(item.id)}
+                                className="text-red-500 hover:text-red-700 text-xs font-medium"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="border-t border-gray-300 pt-4">
+                  <div className="bg-gray-100 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold">Total Amount</span>
+                      <span className="text-xl font-bold text-green-700">
+                        Rs {totalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <h4 className="font-semibold text-gray-800 mb-3">Notes & Terms</h4>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes, terms and conditions..."
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition h-32"
+                    rows={4}
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+              >
+                {isSubmitting ? 'Creating...' : 'Create Quotation'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
