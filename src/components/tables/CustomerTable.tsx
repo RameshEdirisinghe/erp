@@ -1,9 +1,10 @@
 'use client';
 
+import { Customer } from '@/models/Customer';
 import CustomerTableRow from './CustomerTableRow';
 
 interface CustomerTableProps {
-  data: [];
+  data: Customer[];
 }
 
 export default function CustomerTable({ data }: CustomerTableProps) {

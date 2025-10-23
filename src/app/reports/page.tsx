@@ -13,7 +13,7 @@ import { getCustomers } from '@/services/customerService';
 import { getEmployees } from '@/services/employeeService';
 import { getFinances } from '@/services/financeService';
 import { getProducts } from '@/services/productService';
-import { getSales } from '@/services/saleService';
+import { Saleservices } from '@/services/saleService';
 import { getSuppliers } from '@/services/supplierService';
 import { invoicesService } from '@/services/invociesService';
 
@@ -50,7 +50,7 @@ export default function Reports() {
         getEmployees(),
         getFinances(),
         getProducts(),
-        getSales(),
+        Saleservices.getSales(),
         getSuppliers()
       ]);
 
