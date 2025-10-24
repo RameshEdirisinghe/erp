@@ -488,7 +488,7 @@ export default function InvoicesForm({ onAddItem, onSubmit, editingInvoice, onCa
                       placeholder="CUST-001"
                     />
                   </div>
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Customer PO No</label>
                     <input
                       type="text"
@@ -498,7 +498,7 @@ export default function InvoicesForm({ onAddItem, onSubmit, editingInvoice, onCa
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                       placeholder="PO-001"
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
