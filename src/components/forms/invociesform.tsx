@@ -502,7 +502,7 @@ export default function InvoicesForm({ onAddItem, onSubmit, editingInvoice, onCa
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              {/* <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Invoice Type</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {['normal', 'tax', 'quotation', 'purchaseOrder'].map((type) => (
@@ -521,7 +521,7 @@ export default function InvoicesForm({ onAddItem, onSubmit, editingInvoice, onCa
                     </label>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="space-y-6">
