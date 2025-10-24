@@ -369,7 +369,7 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+              {/* <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
                   Quotation Details
                 </h3>
@@ -398,7 +398,7 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
