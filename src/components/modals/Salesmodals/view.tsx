@@ -178,10 +178,16 @@ export default function ViewSaleModal({ isOpen, onClose, sale }: ViewSaleModalPr
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end p-6 border-t border-gray-200">
+        <div className="flex justify-end p-6  border-t border-gray-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-yellow-50 bg-green-800 hover:bg-green-200 rounded-lg transition-colors"
+          >
+            Invoice
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 ml-5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             Close
           </button>
