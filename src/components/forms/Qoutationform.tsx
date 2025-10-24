@@ -273,6 +273,10 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const calculateTotal = () => {
     return items.reduce((total, item) => total + item.amount, 0);
   };
@@ -280,14 +284,14 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
   const totalAmount = calculateTotal();
 
   return (
-    <div className="max-w-8xl mx-auto space-y-6">
+    <div className="max-w-8xl mx-auto space-y-6 print:hidden">
       {successMessage && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg print:hidden">
           <div className="text-green-600 font-medium">{successMessage}</div>
         </div>
       )}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden print:bg-transparent print:shadow-none print:border-none">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 print:hidden">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-white">
               {editingSale ? 'Create Quotation from Sale' : 'Create New Quotation'}
@@ -303,14 +307,14 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
             )}
           </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-6 print:hidden">
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg print:hidden">
               <div className="text-red-600 font-medium whitespace-pre-line">{error}</div>
             </div>
           )}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
+            <div className="space-y-6 print:hidden">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
@@ -557,14 +561,14 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:p-2 print:border-none print:shadow-none print:bg-transparent">
+              <div className="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:p-2 print:border-none print:shadow-none print:bg-transparent print:w-full" id="quotation-preview">
                 <h3 className="text-base font-semibold text-gray-800 mb-3 border-b pb-1 print:hidden">Quotation Preview</h3>
                 <div className="mb-4 print:mb-6">
                   <h2 className="text-xl font-bold text-center text-gray-800 mb-3 print:text-lg print:font-extrabold">QUOTATION</h2>
                   <div className="grid grid-cols-2 gap-3 text-xs print:text-[10px] print:gap-2">
                     <div>
                       <span className="font-semibold">Quotation Number:</span>
-                      <p className="text-gray-700">{formData.quotationNo}</p>
+                      <p className="text-gray-700">{formData.quotationNo || 'N/A'}</p>
                     </div>
                     <div>
                       <span className="font-semibold">Date:</span>
@@ -604,7 +608,7 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                     <h4 className="font-semibold text-gray-800 mb-2 text-xs print:text-[10px] print:font-bold">Items:</h4>
                     <table className="w-full border-collapse border border-gray-300 text-xs print:text-[9px]">
                       <thead>
-                        <tr className="bg-gray-100">
+                        <tr className="bg-gray-100 print:bg-white">
                           <th className="border border-gray-300 px-1 py-0.5 font-medium text-left w-[5%] print:w-[5%]">#</th>
                           <th className="border border-gray-300 px-1 py-0.5 font-medium text-left w-[40%] print:w-[40%]">Description</th>
                           <th className="border border-gray-300 px-1 py-0.5 font-medium text-right w-[10%] print:w-[10%]">Qty</th>
@@ -649,7 +653,7 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                 )}
                 <div className="border-t border-gray-300 pt-3 mb-4 print:pt-2 print:mb-6">
                   <div className="flex justify-end">
-                    <div className="bg-gray-100 p-2 rounded-lg w-48 print:w-40 print:p-1.5">
+                    <div className="bg-gray-100 p-2 rounded-lg w-48 print:w-40 print:p-1.5 print:bg-white">
                       <div className="flex justify-between items-center text-xs print:text-[9px]">
                         <span className="font-semibold">Total Amount:</span>
                         <span className="font-bold text-green-700">Rs {totalAmount.toLocaleString()}</span>
@@ -662,20 +666,23 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                   <div className="text-xs text-gray-700 whitespace-pre-wrap print:text-[9px]">{notes || 'No notes added'}</div>
                 </div>
               </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 print:hidden"
-              >
-                {isSubmitting ? 'Creating...' : 'Create Quotation'}
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 print:hidden"
-              >
-                {isSubmitting ? 'Printing...' : 'Print Quotation'}
-              </button>
+              <div className="flex space-x-4 print:hidden">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                >
+                  {isSubmitting ? 'Creating...' : 'Create Quotation'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  disabled={isSubmitting}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                >
+                  Print Quotation
+                </button>
+              </div>
             </div>
           </div>
         </form>
