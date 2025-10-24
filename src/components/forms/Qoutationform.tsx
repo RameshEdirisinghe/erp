@@ -565,17 +565,10 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                 <div className="mb-4 print:mb-6">
                   <h2 className="text-xl font-bold text-center text-gray-800 mb-3 print:text-lg print:font-extrabold">QUOTATION</h2>
                   <div className="grid grid-cols-2 gap-3 text-xs print:text-[10px] print:gap-2">
-                    <div>
-                      <span className="font-semibold">Quotation Number:</span>
-                      <p className="text-gray-700">{formData.quotationNo || 'N/A'}</p>
-                    </div>
+                  
                     <div>
                       <span className="font-semibold">Date:</span>
                       <p className="text-gray-700">{new Date().toLocaleDateString('en-GB').replace(/\//g, '.')}</p>
-                    </div>
-                    <div>
-                      <span className="font-semibold">VAT Number:</span>
-                      <p className="text-gray-700">{formData.vatNo || 'N/A'}</p>
                     </div>
                     <div>
                       <span className="font-semibold">Valid Until:</span>
