@@ -95,8 +95,8 @@ export const Saleservices = {
       phone: quotationData.customerPhone,
       description: quotationData.items[0]?.description || 'Quotation Items',
       location: quotationData.customerAddress,
-      vatNo: quotationData.vatNo, // Changed from vatNumber to vatNo
-      quotationNo: quotationData.quotationNo, // Changed from quotationNumber to quotationNo
+      vatNo: quotationData.vatNumber, // Changed from vatNumber to vatNo
+      quotationNo: quotationData.quoteNumber, // Changed from quotationNumber to quotationNo
       items: quotationData.items.map(item => ({
         ...item,
         id: item.id || Date.now().toString(),

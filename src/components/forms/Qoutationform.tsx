@@ -13,6 +13,9 @@ interface QuotationFormProps {
 interface ItemFormData {
   itemDescription: string;
   year: string;
+  brand: string;
+  model: string;
+  chassyNo: string;
   unitPrice: string;
   quantity: string;
   warranty: string;
@@ -33,6 +36,9 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
   const [itemForms, setItemForms] = useState<ItemFormData[]>([
     {
       itemDescription: '',
+      brand: '',
+      model: '',
+      chassyNo: '',
       year: '',
       unitPrice: '',
       quantity: '',
@@ -58,10 +64,12 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
       setItems(editingSale.items || []);
       setNotes('');
       
-      // Convert existing items to forms
       if (editingSale.items && editingSale.items.length > 0) {
         setItemForms(editingSale.items.map(item => ({
           itemDescription: item.description,
+          brand: item.brand || '',
+          model: item.model || '',
+          chassyNo: item.chassyNo || '',
           year: item.year || '',
           unitPrice: item.rate.toString(),
           quantity: item.qty.toString(),
@@ -99,6 +107,9 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
       {
         itemDescription: '',
         year: '',
+        brand: '',
+        model: '',
+        chassyNo: '',
         unitPrice: '',
         quantity: '',
         warranty: '',
@@ -146,6 +157,10 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
         rate: unitPrice,
         tax: form.taxRate,
         warranty: form.warranty,
+        brand: form.brand,
+        model: form.model,
+        year: form.year,
+        chassyNo: form.chassyNo,
         amount: totalPrice,
       };
 
@@ -164,10 +179,12 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
 
     setItems(prev => [...prev, ...newItems]);
     
-    // Reset all item forms
     setItemForms([
       {
         itemDescription: '',
+        brand: '',
+        model: '',
+        chassyNo: '',
         year: '',
         unitPrice: '',
         quantity: '',
@@ -200,12 +217,12 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
       const validUntilStr = validUntilDate.toLocaleDateString('en-GB').replace(/\//g, '.');
 
       const quotationData: Omit<Quotation, 'id'> = {
-        quotationNo: formData.quotationNo,
+        quoteNumber: formData.quotationNo,
         customerName: formData.customerName,
         customerEmail: formData.customerEmail,
         customerPhone: formData.customerPhone,
         customerAddress: formData.customerAddress,
-        vatNo: formData.vatNo,
+        vatNumber: formData.vatNo,
         status: 'Draft',
         date: dateStr,
         validUntil: validUntilStr,
@@ -218,7 +235,6 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
       
       setSuccessMessage('Quotation created successfully!');
       
-      // Reset form
       setFormData({
         quotationNo: `QTN-${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`,
         customerName: '',
@@ -231,6 +247,9 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
       setItemForms([
         {
           itemDescription: '',
+          brand: '',
+          model: '',
+          chassyNo: '',
           year: '',
           unitPrice: '',
           quantity: '',
@@ -332,7 +351,7 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                             placeholder="Product or service description"
                           />
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Unit Price *
@@ -374,32 +393,68 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                               <option value="V18">VAT 18%</option>
                             </select>
                           </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Warranty
+                            </label>
+                            <input
+                              type="text"
+                              value={itemForm.warranty}
+                              onChange={(e) => handleItemFormChange(index, 'warranty', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="1 Year"
+                            />
+                          </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Warranty
-                          </label>
-                          <input
-                            type="text"
-                            value={itemForm.warranty}
-                            onChange={(e) => handleItemFormChange(index, 'warranty', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                            placeholder="1 Year"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Year of Build
-                          </label>
-                          <input
-                            type="text"
-                            value={itemForm.year}
-                            onChange={(e) => handleItemFormChange(index, 'warranty', e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                            placeholder="202X"
-                          />
-                        </div>
+                        <div className="grid grid-cols-4 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Brand
+                            </label>
+                            <input
+                              type="text"
+                              value={itemForm.brand}
+                              onChange={(e) => handleItemFormChange(index, 'brand', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="brand name"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Model
+                            </label>
+                            <input
+                              type="text"
+                              value={itemForm.model}
+                              onChange={(e) => handleItemFormChange(index, 'model', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="model"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Chassis No
+                            </label>
+                            <input
+                              type="text"
+                              value={itemForm.chassyNo}
+                              onChange={(e) => handleItemFormChange(index, 'chassyNo', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="Chassis Number"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Year
+                            </label>
+                            <input
+                              type="text"
+                              value={itemForm.year}
+                              onChange={(e) => handleItemFormChange(index, 'year', e.target.value)}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                              placeholder="202X"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -497,101 +552,87 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                       placeholder="Customer Address"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Number</label>
-                      <input
-                        type="text"
-                        name="VehicleNumber"
-                        value={formData.customerEmail}
-                        onChange={handleInputChange}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                        placeholder="vehicle number"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Chassy number</label>
-                      <input
-                        type="text"
-                        name="ChassyNumber"
-                        value={formData.customerPhone}
-                        onChange={handleInputChange}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                        placeholder="Chassy number"
-                      />
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg border border-gray-300 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">Quotation Preview</h3>
-                <div className="mb-6">
-                  <h2 className="text-xl font-bold text-center text-gray-800 mb-4">QUOTATION</h2>
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+              <div className="bg-white p-4 rounded-lg border border-gray-300 shadow-sm print:p-2 print:border-none print:shadow-none print:bg-transparent">
+                <h3 className="text-base font-semibold text-gray-800 mb-3 border-b pb-1 print:hidden">Quotation Preview</h3>
+                <div className="mb-4 print:mb-6">
+                  <h2 className="text-xl font-bold text-center text-gray-800 mb-3 print:text-lg print:font-extrabold">QUOTATION</h2>
+                  <div className="grid grid-cols-2 gap-3 text-xs print:text-[10px] print:gap-2">
                     <div>
                       <span className="font-semibold">Quotation Number:</span>
                       <p className="text-gray-700">{formData.quotationNo}</p>
                     </div>
                     <div>
+                      <span className="font-semibold">Date:</span>
+                      <p className="text-gray-700">{new Date().toLocaleDateString('en-GB').replace(/\//g, '.')}</p>
+                    </div>
+                    <div>
                       <span className="font-semibold">VAT Number:</span>
                       <p className="text-gray-700">{formData.vatNo || 'N/A'}</p>
                     </div>
+                    <div>
+                      <span className="font-semibold">Valid Until:</span>
+                      <p className="text-gray-700">{new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB').replace(/\//g, '.')}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3 border-b pb-2">
-                    {formData.customerName || 'Customer Name'}
+                <div className="mb-4 print:mb-6">
+                  <h3 className="text-base font-semibold text-gray-800 mb-2 border-b pb-1 print:text-sm print:font-bold">
+                    Bill To: {formData.customerName || 'Customer Name'}
                   </h3>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1 text-xs print:text-[10px]">
                     <div>
                       <span className="font-semibold">Email:</span>
-                      <span className="text-gray-700 ml-2">{formData.customerEmail || 'No email'}</span>
+                      <span className="text-gray-700 ml-1">{formData.customerEmail || 'No email'}</span>
                     </div>
                     <div>
                       <span className="font-semibold">Contact No:</span>
-                      <span className="text-gray-700 ml-2">{formData.customerPhone || 'No phone'}</span>
+                      <span className="text-gray-700 ml-1">{formData.customerPhone || 'No phone'}</span>
                     </div>
                     <div>
                       <span className="font-semibold">Address:</span>
-                      <span className="text-gray-700 ml-2">{formData.customerAddress || 'No address'}</span>
+                      <span className="text-gray-700 ml-1">{formData.customerAddress || 'No address'}</span>
                     </div>
                   </div>
                 </div>
                 {items.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-800 mb-3">Quotation Items:</h4>
-                    <table className="w-full border-collapse border border-gray-300 text-sm">
+                  <div className="mb-4 print:mb-6">
+                    <h4 className="font-semibold text-gray-800 mb-2 text-xs print:text-[10px] print:font-bold">Items:</h4>
+                    <table className="w-full border-collapse border border-gray-300 text-xs print:text-[9px]">
                       <thead>
                         <tr className="bg-gray-100">
-                          <th className="border border-gray-300 px-3 py-2 text-left">Item Code</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Description</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Unit Price</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Qty</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Tax</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Total</th>
-                          <th className="border border-gray-300 px-3 py-2 text-left">Actions</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-left w-[5%] print:w-[5%]">#</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-left w-[40%] print:w-[40%]">Description</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-right w-[10%] print:w-[10%]">Qty</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-right w-[15%] print:w-[15%]">Unit Price</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-right w-[10%] print:w-[10%]">Tax</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-right w-[15%] print:w-[15%]">Amount</th>
+                          <th className="border border-gray-300 px-1 py-0.5 font-medium text-center w-[5%] print:hidden">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {items.map((item) => (
+                        {items.map((item, index) => (
                           <tr key={item.id}>
-                            <td className="border border-gray-300 px-3 py-2">{item.itemCode}</td>
-                            <td className="border border-gray-300 px-3 py-2">
-                              <div>
-                                <div>{item.description}</div>
-                                {item.warranty && (
-                                  <div className="text-xs text-gray-600">Warranty: {item.warranty}</div>
-                                )}
+                            <td className="border border-gray-300 px-1 py-0.5 align-top">{index + 1}</td>
+                            <td className="border border-gray-300 px-1 py-0.5 align-top">
+                              <div className="font-medium">{item.description}</div>
+                              <div className="text-gray-600 text-[10px] print:text-[8px] space-y-0.5">
+                                {item.brand && <div>Brand: {item.brand}</div>}
+                                {item.model && <div>Model: {item.model}</div>}
+                                {item.year && <div>Year: {item.year}</div>}
+                                {item.chassyNo && <div>Chassis No: {item.chassyNo}</div>}
+                                {item.warranty && <div>Warranty: {item.warranty}</div>}
                               </div>
                             </td>
-                            <td className="border border-gray-300 px-3 py-2">Rs {item.rate.toLocaleString()}</td>
-                            <td className="border border-gray-300 px-3 py-2">{item.qty}</td>
-                            <td className="border border-gray-300 px-3 py-2">{item.tax}</td>
-                            <td className="border border-gray-300 px-3 py-2">Rs {item.amount.toLocaleString()}</td>
-                            <td className="border border-gray-300 px-3 py-2">
+                            <td className="border border-gray-300 px-1 py-0.5 text-right align-top">{item.qty}</td>
+                            <td className="border border-gray-300 px-1 py-0.5 text-right align-top">Rs {item.rate.toLocaleString()}</td>
+                            <td className="border border-gray-300 px-1 py-0.5 text-right align-top">{item.tax}</td>
+                            <td className="border border-gray-300 px-1 py-0.5 text-right align-top">Rs {item.amount.toLocaleString()}</td>
+                            <td className="border border-gray-300 px-1 py-0.5 text-center align-top print:hidden">
                               <button
                                 type="button"
                                 onClick={() => removeItem(item.id)}
@@ -606,33 +647,34 @@ export default function QuotationForm({ onSubmit, editingSale, onSuccess, onCanc
                     </table>
                   </div>
                 )}
-                <div className="border-t border-gray-300 pt-4">
-                  <div className="bg-gray-100 p-4 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold">Total Amount</span>
-                      <span className="text-xl font-bold text-green-700">
-                        Rs {totalAmount.toLocaleString()}
-                      </span>
+                <div className="border-t border-gray-300 pt-3 mb-4 print:pt-2 print:mb-6">
+                  <div className="flex justify-end">
+                    <div className="bg-gray-100 p-2 rounded-lg w-48 print:w-40 print:p-1.5">
+                      <div className="flex justify-between items-center text-xs print:text-[9px]">
+                        <span className="font-semibold">Total Amount:</span>
+                        <span className="font-bold text-green-700">Rs {totalAmount.toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6">
-                  <h4 className="font-semibold text-gray-800 mb-3">Notes & Terms</h4>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes, terms and conditions..."
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition h-32"
-                    rows={4}
-                  />
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2 text-xs print:text-[10px] print:font-bold">Notes & Terms</h4>
+                  <div className="text-xs text-gray-700 whitespace-pre-wrap print:text-[9px]">{notes || 'No notes added'}</div>
                 </div>
               </div>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200"
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 print:hidden"
               >
                 {isSubmitting ? 'Creating...' : 'Create Quotation'}
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 print:hidden"
+              >
+                {isSubmitting ? 'Printing...' : 'Print Quotation'}
               </button>
             </div>
           </div>

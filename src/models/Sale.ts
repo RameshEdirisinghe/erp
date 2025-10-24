@@ -1,6 +1,8 @@
 export interface Sale {
   id: number;
   customer: string;
+  quotationNo: string;
+  vatNo?: string;
   amount: number;
   date: string;
   status: 'Completed' | 'Pending' | 'Cancelled';
@@ -21,6 +23,10 @@ export interface SaleItem {
   description: string;
   qty: number;
   rate: number;
+  year?: string;
+  brand?: string;
+  model?: string;
+  chassyNo?: string;
   tax: string;
   warranty?: string;
   amount: number;
@@ -47,6 +53,10 @@ export interface Quotation {
 export interface QuotationItem {
   id: string;
   itemCode: string;
+  brand?: string;
+  model?: string;
+  year?: string;
+  chassyNo?: string;
   description: string;
   qty: number;
   rate: number;
