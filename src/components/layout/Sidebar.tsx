@@ -22,7 +22,7 @@ export default function Sidebar() {
     { href: '/inventory', label: 'Inventory', icon: <Package size={20} /> },
     // { href: '/customers', label: 'Customers', icon: <Users size={20} /> },
     // { href: '/suppliers', label: 'Suppliers', icon: <Truck size={20} /> },
-    { href: '/sales', label: 'Sales', icon: <DollarSign size={20} /> },
+    { href: '/sales', label: 'Quotation', icon: <DollarSign size={20} /> },
      { href: '/invoices', label: 'Invoices', icon: <FileText size={20} /> },
     { href: '/finance', label: 'Finance', icon: <FileText size={20} /> },
     // { href: '/employees', label: 'Employees', icon: <Users size={20} /> },
